@@ -5,45 +5,44 @@ const refs = {
     form: document.querySelector(".form"),
     formDelay: document.querySelector('[name="delay"]'),
     formState: document.querySelector('[name="state"]'),
-    formBtn: document.querySelector('button[type="submit"]'),
 };
 
-refs.formBtn.addEventListener("click", (event) => {
+refs.form.addEventListener("submit", (event) => {
     event.preventDefault();
     const stateValue = document.querySelector('[name="state"]:checked').value;
     const delayValue = refs.formDelay.value;
-    if (!delayValue) {
+    if (!delayValue || !stateValue) {
         return;
     }
-    const promises = [];
-    const newPromis = new Promise((resolve, reject) => {
-        setTimeout(() => {
-            if (stateValue === "fulfilled") {
-                iziToast.show({
-                    message: `✅ Fulfilled promise in ${delayValue}ms`,
-                    position: "topRight",
-                    backgroundColor: "#338733",
-                    timeout: 5000,
-                    transitionIn: "fadeInDown",
-                });
-                resolve();
-            } else if (stateValue === "rejected") {
-                iziToast.show({
-                    message: `❌ Rejected promise in ${delayValue}ms`,
-                    position: "topRight",
-                    backgroundColor: "#FF4D4D",
-                    timeout: 5000,
-                    transitionIn: "fadeInDown",
-                });
-                reject();
-            }
-        }, refs.formDelay.value);
-    });
-
-    promises.push(newPromis);
-    refs.formDelay.value = '';  
-    const stateRadio = document.querySelector('[name="state"]:checked');
-    if (stateRadio) {
-      stateRadio.checked = false;  
-    }
+    createPromise(delayValue, stateValue)
+        .then((delay) => {
+            iziToast.show({
+                message: `✅ Fulfilled promise in ${delay}ms`,
+                position: "topRight",
+                backgroundColor: "#338733",
+                timeout: 5000,
+                transitionIn: "fadeInDown",
+            });
+        })
+        .catch((delay) => {
+            iziToast.show({
+                message: `❌ Rejected promise in ${delay}ms`,
+                position: "topRight",
+                backgroundColor: "#FF4D4D",
+                timeout: 5000,
+                transitionIn: "fadeInDown",
+            });
+        });
+    refs.form.reset();
 });
+function createPromise(delay, state) {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            if (state === "fulfilled") {
+                resolve(delay);
+            } else if (state === "rejected") {
+                reject(delay);
+            }
+        }, delay);
+    });
+}

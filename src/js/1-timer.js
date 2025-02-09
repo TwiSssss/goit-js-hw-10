@@ -14,27 +14,37 @@ const refs = {
     minutesField: document.querySelector("[data-minutes]"),
     secondsField: document.querySelector("[data-seconds]"),
 };
-
-const selector = "#datetime-picker";
+let targetTime = null;
 const options = {
     enableTime: true,
     time_24hr: true,
     defaultDate: new Date(),
     minuteIncrement: 1,
     onClose(selectedDates) {
-        console.log(selectedDates[0]);
+        targetTime = selectedDates[0];
+        if (targetTime <= Date.now()) {
+            refs.startBtn.disabled = true;
+            iziToast.show({
+                message: "Please choose a date in the future!",
+                position: "topRight",
+                backgroundColor: "#FF4D4D",
+                iconUrl: pathErrorIcon,
+                timeout: 5000,
+                transitionIn: "fadeInDown",
+            });
+        } else {
+            refs.startBtn.disabled = false;
+        }
+        console.log(targetTime);
     },
 };
-flatpickr(selector, options);
+
+flatpickr(refs.dateTimePicker, options);
 
 const timer = {
     intervalId: null,
-    targetTime: null,
-
     start() {
         console.log("START");
-        const userDate = refs.dateTimePicker.value;
-        this.targetTime = new Date(userDate).getTime();
         this.intervalId = setInterval(() => {
             this.tick();
         }, 1000);
@@ -42,8 +52,8 @@ const timer = {
 
     tick() {
         const currentTime = Date.now();
-        const ms = this.targetTime - currentTime;
-        if (ms < 0) {
+        const ms = targetTime - currentTime;
+        if (ms <= 0) {
             this.stop();
             refs.dateTimePicker.disabled = false;
             return;
@@ -62,25 +72,6 @@ const timer = {
 function addLeadingZero(value) {
     return value.toString().padStart(2, "0");
 }
-
-refs.dateTimePicker.addEventListener("input", (event) => {
-    const selectedDate = new Date(event.target.value);
-
-    if (selectedDate < Date.now()) {
-        refs.startBtn.disabled = true;
-        iziToast.show({
-            message: "Please choose a date in the future!",
-            position: "topRight",
-            backgroundColor: "#FF4D4D",
-            iconUrl: pathErrorIcon,
-            timeout: 5000,
-            transitionIn: "fadeInDown",
-        });
-        return;
-    } else {
-        refs.startBtn.disabled = false;
-    }
-});
 
 refs.startBtn.addEventListener("click", () => {
     refs.startBtn.disabled = true;
